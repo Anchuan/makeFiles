@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>Bootstrap 101 Template</title>
+    <!-- Bootstrap -->
+    <link href="https://cdn.bootcss.com/bootstrap/4.1.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/popper.js/1.12.5/umd/popper.min.js"></script>
+    <!-- 加载 Bootstrap 的所有 JavaScript 插件。你也可以根据需要只加载单个插件。 -->
+    <script src="https://cdn.bootcss.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <!-- HTML5 shim 和 Respond.js 是为了让 IE8 支持 HTML5 元素和媒体查询（media queries）功能 -->
+    <!-- 警告：通过 file:// 协议（就是直接将 html 页面拖拽到浏览器中）访问页面时 Respond.js 不起作用 -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]--></head>
+  
+  <body>
+    <div class="container">
+      <h3>接口编辑器</h3>
+      <lable>请求方式</lable>
+      <input type="radio" name="req-type" value="http">http/https
+      <input type="radio" name="req-type" value="jsf">jsf
+      <br>
+      <lable>请求地址</lable>
+      <input name="address" type="text" class="form-control" placeholder='接口地址https:\\www.jd.com  或者  jsf接口地址 *.*.*'>
+      <lable>返回数据</lable>
+      <form class="form-horizontal" id="http-form" role="form" style="display:none;">
+        <div class="form-group">
+          <!--http 数据生成-->
+          <div class="input-group mb">
+            <span class="input-group-text">headers</span>
+            <input name="headers" type="text" class="form-control" placeholder='[{"u":"lily"},{"p":"pwd"}]'></div>
+          <div class="input-group" id="header-param">
+            <span>（添加header）</span>
+            <input type="text" class="form-control" id="header-key">
+            <input type="text" id="header-value" class="form-control">
+            <button type="button" id="add-header">添加</button></div>
+          <br/>
+          <div class="input-group mb">
+            <span class="input-group-text">contentType</span>
+            <input name="contentType" type="text" class="form-control" placeholder='text/html'></div>
+          <div class="input-group">
+            <span class="input-group-text">responseCode</span>
+            <input name="responseCode" type="text" class="form-control" placeholder='OK'></div>
+          <div class="input-group">
+            <span class="input-group-text">responseMessage</span>
+            <input name="responseMessage" type="text" class="form-control" placeholder='成功'></div>
+          <div class="input-group">
+            <span class="input-group-text">outContent</span>
+            <input name="outContent" type="text" class="form-control" placeholder="返回数据"></div>
+        </div>
+      </form>
+      <!--jsf 数据生成-->
+      <form class="form-horizontal" id="jsf-form" role="form"  style="display:none;">
+        <input type="button" id="btn1" class="btn btn-info" value="添加返回参数" />
+        <div id="div_add"></div>
+      </form>
+    </br>
+      <button id="format" class="btn btn-info">格式化</button>
+      <div>
+        <pre name="formatDate">
+          <p class="jumbotron">
+            <b>Results:</b>
+            <span id="results"></span>
+          </p>
+        </pre>
+      </div>
+    </div>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script>
+
+    $(document).ready(function() {
+        $('input[type=radio][name=req-type]').change(function() {
+          if (this.value == 'http') {
+            $("#jsf-form").hide();
+            $("#http-form").show();
+          } else if (this.value == 'jsf') {
+            $("#http-form").hide();
+            $("#jsf-form").show();
+          }
+        });
+      });
+      $("#format").click(function() {
+        var reqType = $('input[name=req-type]:checked').val();
+         var f;
+         var result ='';
+          $("#results").empty();
+        if(reqType=='http'){
+          f = formatHttp();
+          result = result+'http   ';
+           
+        }else if (reqType == 'jsf') {
+        f=formatJsf();        
+        result = result+'jsf   ';
+        }else{
+          return;
+        }
+        var strFormat = JSON.stringify(f);
+        strFormat = strFormat.replace(/\\/g, '');
+        strFormat = strFormat.replace(/\"\[/g, '[');
+        strFormat = strFormat.replace(/\]\"/g, ']');
+        result =result + $('input[name="address"]').val() +"  *   ";
+        result =result +strFormat;
+
+        $("#results").append(result);
+      });
+      function  formatHttp(){
+        var f={};
+         var form = $('#http-form').serializeArray();
+         $.each(form,
+        function(i, field) {
+          if (field.value != "" & field.value != null & field.value != undefined) {
+            f[field.name] = field.value;
+          }
+        });
+          return f;
+      };
+    function formatJsf(){
+      var $form = $('#div_add .input-group');
+      var data = {};
+      $.each($form, function(index, item) {
+        var name = $(item).find('input[name=key]').val();
+        var value = $(item).find('input[name=value]').val();
+
+        data[name] = value;
+      });
+      return data;
+       
+      };
+      $("#add-header").click(function() {
+        var headers = $(" input[ name='headers' ] ").val();
+        var addheader = '{"' + $("#header-key").val() + '":"' + $("#header-value").val() + '"}';
+        if ("" == headers || headers == null) {
+          headers = "[" + addheader;
+        } else {
+          headers = headers.replace(/\]/g, '');
+          headers = headers + "," + addheader
+        }
+        headers = headers + "]";
+        $("input[ name='headers' ] ").val(headers);
+        $("#header-key").val("");
+        $("#header-value").val("");
+      });
+
+      $("#btn1").click(function() {
+                var d = document.getElementById("div_add");
+                var a = document.createElement("div");
+                // var lastDiv = $('#div_add>div:last')[0];
+                // var divIndex =1;;
+                // if(undefined != lastDiv && undefined != lastDiv.children ){
+        
+                //      var idIndex=lastDiv.children.id;
+                //      divIndex = idIndex.replace(/jsf-add-div-/g,'');
+                //      divIndex++;
+                // }
+                a.innerHTML = '<div class="input-group" ><input name="key" type="text" class="form-control">'+
+  '<input type="text" name="value" class="form-control"> <input type="button" value="删除"  onclick="del(this)"/></div>';
+                d.appendChild(a);
+            });
+
+
+  var del = function(a){
+              var div =  $(a).parent();
+              div.remove();
+            }
+  </script>
+  </body>
+
+</html>
+<!-- id="jsf-add-div-'+divIndex+'" -->
