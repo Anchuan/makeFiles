@@ -58,11 +58,13 @@
         </div>
       </form>
       <!--jsf 数据生成-->
-      <form class="form-horizontal" id="jsf-form" role="form"  style="display:none;">
-        <input type="button" id="btn1" class="btn btn-info" value="添加返回参数" />
-        <div id="div_add"></div>
-      </form>
-    </br>
+      <form class="form-horizontal" id="jsf-form" role="form" style="display:none;">
+        <input type="radio" name="jsf-rsp-type" value="string">string
+        <input type="radio" name="jsf-rsp-type" value="json">json
+        <input id="jsf-string-rsp" type="text" class="form-control" style="display:none;">
+        <input type="button" id="btn1" class="btn btn-info" style="display:none;" value="添加返回参数" />
+        <div id="div_add"></div></form>
+      </br>
       <button id="format" class="btn btn-info">格式化</button>
       <div>
         <pre name="formatDate">
@@ -74,9 +76,7 @@
       </div>
     </div>
     <script src="http://code.jquery.com/jquery-latest.js"></script>
-    <script>
-
-    $(document).ready(function() {
+    <script>$(document).ready(function() {
         $('input[type=radio][name=req-type]').change(function() {
           if (this.value == 'http') {
             $("#jsf-form").hide();
@@ -87,52 +87,85 @@
           }
         });
       });
+      $(document).ready(function() {
+        $('input[type=radio][name=jsf-rsp-type]').change(function() {
+          if (this.value == 'string') {
+            $("#btn1").hide();
+            $("#jsf-string-rsp").show();
+          } else if (this.value == 'json') {
+            $("#jsf-string-rsp").hide();
+            $("#btn1").show();
+          }
+        });
+      });
       $("#format").click(function() {
+        var result = '';
+        var valid = true;
+        var address = $('input[name="address"]').val();
         var reqType = $('input[name=req-type]:checked').val();
-         var f;
-         var result ='';
-          $("#results").empty();
-        if(reqType=='http'){
-          f = formatHttp();
-          result = result+'http   ';
-           
-        }else if (reqType == 'jsf') {
-        f=formatJsf();        
-        result = result+'jsf   ';
-        }else{
+        $("#results").empty();
+        if (undefined == address || null == address || '' == address) {
+          result = result + "请求地址不能为空--";
+          valid = false;
+        }
+        if (undefined == reqType || null == reqType || '' == reqType) {
+          result = result + "请求方式必选--";
+          valid = false;
+        }
+        if (false == valid) {
+          $("#results").append(result);
           return;
+        }
+
+        var f;
+
+        if (reqType == 'http') {
+          f = formatHttp();
+          result = result + 'http   ';
+
+        } else if (reqType == 'jsf') {
+          f = formatJsf();
+          result = result + 'jsf   ';
         }
         var strFormat = JSON.stringify(f);
         strFormat = strFormat.replace(/\\/g, '');
         strFormat = strFormat.replace(/\"\[/g, '[');
         strFormat = strFormat.replace(/\]\"/g, ']');
-        result =result + $('input[name="address"]').val() +"  *   ";
-        result =result +strFormat;
+        result = result + address + "  *   ";
+        result = result + strFormat;
 
         $("#results").append(result);
       });
-      function  formatHttp(){
-        var f={};
-         var form = $('#http-form').serializeArray();
-         $.each(form,
+      function formatHttp() {
+        var f = {};
+        var form = $('#http-form').serializeArray();
+        $.each(form,
         function(i, field) {
           if (field.value != "" & field.value != null & field.value != undefined) {
             f[field.name] = field.value;
           }
         });
-          return f;
+        return f;
       };
-    function formatJsf(){
-      var $form = $('#div_add .input-group');
-      var data = {};
-      $.each($form, function(index, item) {
-        var name = $(item).find('input[name=key]').val();
-        var value = $(item).find('input[name=value]').val();
+      function formatJsf() {
+        var $form = $('#div_add .input-group');
+        var data = {};
+        var respType = $('input[name=jsf-rsp-type]:checked').val();
+        if (respType == 'string') {
+          data = $('#jsf-string-rsp').val();
+        } else {
 
-        data[name] = value;
-      });
-      return data;
-       
+          $.each($form,
+          function(index, item) {
+            var name = $(item).find('input[name=key]').val();
+            var value = $(item).find('input[name=value]').val();
+
+            data[name] = value;
+          });
+        }
+
+        return data;
+
       };
       $("#add-header").click(function() {
         var headers = $(" input[ name='headers' ] ").val();
@@ -150,27 +183,23 @@
       });
 
       $("#btn1").click(function() {
-                var d = document.getElementById("div_add");
-                var a = document.createElement("div");
-                // var lastDiv = $('#div_add>div:last')[0];
-                // var divIndex =1;;
-                // if(undefined != lastDiv && undefined != lastDiv.children ){
-        
-                //      var idIndex=lastDiv.children.id;
-                //      divIndex = idIndex.replace(/jsf-add-div-/g,'');
-                //      divIndex++;
-                // }
-                a.innerHTML = '<div class="input-group" ><input name="key" type="text" class="form-control">'+
-  '<input type="text" name="value" class="form-control"> <input type="button" value="删除"  onclick="del(this)"/></div>';
-                d.appendChild(a);
-            });
+        var d = document.getElementById("div_add");
+        var a = document.createElement("div");
+        // var lastDiv = $('#div_add>div:last')[0];
+        // var divIndex =1;;
+        // if(undefined != lastDiv && undefined != lastDiv.children ){
+        //      var idIndex=lastDiv.children.id;
+        //      divIndex = idIndex.replace(/jsf-add-div-/g,'');
+        //      divIndex++;
+        // }
+        a.innerHTML = '<div class="input-group" ><input name="key" type="text" class="form-control">' + '<input type="text" name="value" class="form-control"> <input type="button" value="删除"  onclick="del(this)"/></div>';
+        d.appendChild(a);
+      });
 
-
-  var del = function(a){
-              var div =  $(a).parent();
-              div.remove();
-            }
-  </script>
+      var del = function(a) {
+        var div = $(a).parent();
+        div.remove();
+      }</script>
   </body>
 
 </html>
